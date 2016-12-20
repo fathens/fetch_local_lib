@@ -1,7 +1,6 @@
 require 'uri'
 require 'pathname'
 require 'fileutils'
-require 'shellwords'
 require 'git'
 require 'fetch_local_lib/credential'
 

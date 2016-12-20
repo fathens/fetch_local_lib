@@ -1,3 +1,4 @@
+require 'shellwords'
 
 module FetchLocalLib
     class Credential
