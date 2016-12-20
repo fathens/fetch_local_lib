@@ -1,6 +1,7 @@
 require 'pathname'
 require 'fileutils'
 require 'git'
+require_relative 'version'
 
 module FetchLocalLib
     class Repo
@@ -15,6 +16,7 @@ module FetchLocalLib
         attr_accessor :url, :name, :base_dir, :hidden_path, :tag
 
         def initialize(url, base_dir = nil, tag: nil)
+            puts "Using FetchLocalLib::Repo #{FetchLocalLib::VERSION}"
             @url = url
             @name = File.basename(url.split('/').last, '.git')
             @base_dir = base_dir || Pathname.pwd
