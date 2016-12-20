@@ -1,6 +1,7 @@
 require 'pathname'
 require 'fileutils'
 require 'git'
+require_relative 'version'
 
 module FetchLocalLib
     class Repo
@@ -15,6 +16,7 @@ module FetchLocalLib
         attr_accessor :url, :name, :base_dir, :hidden_path, :tag
 
         def initialize(url, base_dir = nil, tag: nil)
+            puts "Using FetchLocalLib::Repo #{FetchLocalLib::VERSION}"
             @url = url
             @name = File.basename(url.split('/').last, '.git')
             @base_dir = base_dir || Pathname.pwd
@@ -38,12 +40,24 @@ module FetchLocalLib
         def git_clone
             if dir.exist?
                 if cloned
+                    puts "Already cloned '#{url}', checking out '#{tag}'"
                     cloned.checkout(tag)
                     return dir
                 end
                 FileUtils.rm_rf(dir)
             end
-            Git.clone(url, name, path: dir.dirname.to_s).checkout(tag)
+            begin
+                retry_count ||= 3
+                puts "Cloning git '#{url}'"
+                Git.clone(url, name, path: dir.dirname.to_s).checkout(tag)
+            rescue Git::GitExecuteError => ex
+                if (retry_count -= 1) > 0
+                    puts "Failed and retry(#{retry_count}) to clone: '#{ex}'"
+                    retry
+                else
+                    raise ex
+                end
+            end
             return dir
         end
     end
