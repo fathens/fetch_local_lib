@@ -43,7 +43,12 @@ module FetchLocalLib
                 end
                 FileUtils.rm_rf(dir)
             end
-            Git.clone(url, name, path: dir.dirname.to_s).checkout(tag)
+            begin
+                retry_count ||= 0
+                Git.clone(url, name, path: dir.dirname.to_s).checkout(tag)
+            rescue
+                retry if (retry_count += 1) < 3
+            end
             return dir
         end
     end
