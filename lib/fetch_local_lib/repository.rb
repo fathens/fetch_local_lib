@@ -1,31 +1,25 @@
-require 'uri'
 require 'pathname'
 require 'fileutils'
 require 'git'
-require 'fetch_local_lib/credential'
 
 module FetchLocalLib
     class Repo
         def self.github(base_dir, repo_path, tag: nil)
-            Repo.new("https://github.com/#{repo_path}.git", base_dir, tag: tag)
+            Repo.new("git@github.com:#{repo_path}.git", base_dir, tag: tag)
         end
 
         def self.bitbucket(base_dir, repo_name, owner: 'fathens', tag: nil)
-            Repo.new("https://bitbucket.org/#{owner}/#{repo_name}.git", base_dir,
-                tag: tag,
-                cred: Credential.bitbucket
-            )
+            Repo.new("git@bitbucket.org:#{owner}/#{repo_name}.git", base_dir, tag: tag)
         end
 
-        attr_accessor :url, :name, :base_dir, :hidden_path, :tag, :cred
+        attr_accessor :url, :name, :base_dir, :hidden_path, :tag
 
-        def initialize(url, base_dir = nil, tag: nil, cred: nil, username: nil, password: nil)
+        def initialize(url, base_dir = nil, tag: nil)
             @url = url
-            @name = File.basename(URI.parse(url).path, '.git')
+            @name = File.basename(url.split('/').last, '.git')
             @base_dir = base_dir || Pathname.pwd
             @hidden_path = '.repo'
             @tag = tag || "master"
-            @cred = cred || Credential.build(username, password)
         end
 
         def dir
@@ -49,8 +43,7 @@ module FetchLocalLib
                 end
                 FileUtils.rm_rf(dir)
             end
-            target_url = @cred&.inject_to(@url) || @url
-            Git.clone(target_url, name, path: dir.dirname.to_s).checkout(tag)
+            Git.clone(url, name, path: dir.dirname.to_s).checkout(tag)
             return dir
         end
     end
