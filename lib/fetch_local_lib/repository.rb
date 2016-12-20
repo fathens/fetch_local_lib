@@ -38,16 +38,23 @@ module FetchLocalLib
         def git_clone
             if dir.exist?
                 if cloned
+                    puts "Already cloned '#{url}', checking out '#{tag}'"
                     cloned.checkout(tag)
                     return dir
                 end
                 FileUtils.rm_rf(dir)
             end
             begin
-                retry_count ||= 0
+                retry_count ||= 3
+                puts "Cloning git '#{url}'"
                 Git.clone(url, name, path: dir.dirname.to_s).checkout(tag)
-            rescue
-                retry if (retry_count += 1) < 3
+            rescue Git::GitExecuteError => ex
+                if (retry_count -= 1) > 0
+                    puts "Failed and retry(#{retry_count}) to clone: '#{ex}'"
+                    retry
+                else
+                    raise ex
+                end
             end
             return dir
         end
